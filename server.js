@@ -6,6 +6,15 @@ let players = new Map();
 serverHandlers['connect'] = function(id, data) {
     if (canJoin) {
         players.set(id, {});
+        if (document.getElementById("goodCount")) {
+            setDefaultCounts();
+            document.getElementById("goodCount").value = goodIn.toString();
+            document.getElementById("badCount").value = badIn.toString();
+            document.getElementById("redAceCount").value = redAceIn.toString();
+            document.getElementById("blackAceCount").value = blackAceIn.toString();
+            document.getElementById("cardCount").value = cardsPerPlayer.toString();
+            document.getElementById("playerCount").innerText = numPlayers.toString();
+        }
     }
 };
 
@@ -46,6 +55,23 @@ function shuffleArray(array) {
     }
 }
 
+function setDefaultCounts() {
+    numPlayers = players.size;
+    if (numPlayers <= 5) {
+        goodIn = 4;
+        badIn = 2;
+        redAceIn = 1;
+        blackAceIn = 0;
+    }
+    else {
+        badIn = Math.floor((numPlayers + 2) / 3);
+        goodIn = badIn * 2;
+        redAceIn = 1;
+        blackAceIn = 1;
+    }
+    cardsPerPlayer = 4;
+}
+
 export function startGame() {
     gameActive = true;
     canJoin = false;
@@ -58,19 +84,10 @@ export function startGame() {
     redAceIn = parseInt(document.getElementById('redAceCount').value || '0');
     goodIn = parseInt(document.getElementById('blackAceCount').value || '0');
     cardsPerPlayer = parseInt(document.getElementById('cardCount').value || '4');
-    if (goodIn + badIn + redAceIn + blackAceIn < numPlayers) {
-        if (numPlayers === 4 || numPlayers === 5) {
-            goodIn = 4;
-            badIn = 2;
-            redAceIn = 1;
-            blackAceIn = 0;
-        }
-        else {
-            badIn = Math.floor((numPlayers + 2) / 3);
-            goodIn = badIn * 2;
-            redAceIn = 1;
-            blackAceIn = 1;
-        }
+    if (goodIn + badIn + redAceIn + blackAceIn < numPlayers 
+        || [goodIn, badIn, redAceIn, blackAceIn, cardsPerPlayer].some((n) => Number.isInteger(n) || n < 0) 
+        || cardsPerPlayer < 2) {
+        setDefaultCounts();
     }
     console.log(badIn, goodIn, redAceIn, blackAceIn);
     let roleList = new Array(goodIn).fill('good').concat(new Array(badIn).fill('bad')).concat(new Array(redAceIn).fill('red-ace')).concat(new Array(blackAceIn).fill('black-ace'));

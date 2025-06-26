@@ -57,7 +57,7 @@ export function startGame() {
             redAceIn = 1;
             blackAceIn = 0;
         }
-        badIn = (numPlayers + 2) / 3;
+        badIn = Math.floor((numPlayers + 2) / 3);
         goodIn = badIn * 2;
         redAceIn = 1;
         blackAceIn = 1;

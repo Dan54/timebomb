@@ -53,6 +53,11 @@ export function startGame() {
     blacksLeft = numPlayers;
     jokersLeft = 2;
     primerLeft = 1;
+    goodIn = parseInt(document.getElementById('goodCount').value || '0');
+    badIn = parseInt(document.getElementById('badCount').value || '0');
+    redAceIn = parseInt(document.getElementById('redAceCount').value || '0');
+    goodIn = parseInt(document.getElementById('blackAceCount').value || '0');
+    cardsPerPlayer = parseInt(document.getElementById('cardCount').value || '4');
     if (goodIn + badIn + redAceIn + blackAceIn < numPlayers) {
         if (numPlayers === 4 || numPlayers === 5) {
             goodIn = 4;

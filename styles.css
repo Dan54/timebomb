@@ -95,6 +95,19 @@ html {
     border-radius: 5px;
     text-align: center;
 }
+#start-box-content > div {
+    margin: 10px;
+}
+#gameSettings {
+    display: flex;
+    justify-content: space-evenly;
+    align-content: center;
+    flex-flow: row wrap;
+    margin: 5px;
+}
+#gameSettings > div {
+    text-align: right;
+}
 
 button {
     padding: 10px;
@@ -106,6 +119,9 @@ button {
 input {
     font-size: inherit;
     border-radius: 5px;
+}
+input[type=number] {
+    width: 2em;
 }
 
 .scaryJokers {

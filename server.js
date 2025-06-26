@@ -126,3 +126,7 @@ function pickCard(id, data) {
     sendToClient(pickee, 'set-cards', cards);
 }
 serverHandlers['pick-card'] = pickCard;
+
+serverHandlers['set-name'] = function(id, name) {
+    broadcast('change-name', {playerId: id, name: name});
+}

@@ -1,4 +1,4 @@
-import {connectToServer} from "./comms.js";
+import {connectToServer, sendToServer} from "./comms.js";
 import {} from "./client.js";
 import {startServer, startGame, setStartCb} from "./server.js";
 
@@ -16,8 +16,10 @@ setStartCb((id) => {
     Room Code: ${id}<br/>Room Link: ${url.href}</div>
     <button id="copyLink">Copy Room Link</button>
     <button id="shareLink">Share Room Link</button>
-    <button id="startGame">Start Game</button>`;
+    <button id="startGame">Start Game</button>
+    <div>Name: <input id="playerName" /></div>`;
     document.getElementById("startGame").addEventListener("click", () => {
+        sendToServer('set-name', document.getElementById('playerName').value);
         startGame();
         document.getElementById('modal').style.display = 'none';
     });
@@ -48,12 +50,20 @@ let hostId = new URLSearchParams(document.location.search).get('host');
 
 if (hostId) {
     connectToServer(hostId);
-    document.getElementById('modal').style.display = 'none';
+    document.getElementById("start-box-content").innerHTML = `<div>Name: <input id="playerName" /><button id="setName">Confirm</button></div>`;
+    document.getElementById('setName').addEventListener("click", () => {
+        sendToServer('set-name', document.getElementById('playerName').value);
+        document.getElementById('modal').style.display = 'none';
+    });
 }
 else {
     document.getElementById("connectButton").addEventListener("click", () => {
         connectToServer(document.getElementById("serverId").value);
-        document.getElementById('modal').style.display = 'none';
+        document.getElementById("start-box-content").innerHTML = `<div>Name: <input id="playerName" /><button id="setName">Confirm</button></div>`;
+        document.getElementById('setName').addEventListener("click", () => {
+            sendToServer('set-name', document.getElementById('playerName').value);
+            document.getElementById('modal').style.display = 'none';
+        });
     });
     document.getElementById("startButton").addEventListener("click", () => {
         document.getElementById("start-box-content").innerHTML = '';

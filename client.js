@@ -3,8 +3,9 @@ import { sendToServer, clientHandlers } from "./comms.js";
 const cardBack = '&#x1F0A0;';
 
 let myId = -1;
-let players = new Map();
+let playerElements = new Map();
 let picker = -1;
+let playerData = new Map();
 
 clientHandlers['connect'] = function(data) {
     console.log(`Connected to server, we are ${data.id}`);
@@ -17,11 +18,16 @@ function createOtherPlayer(id) {
             <div class="name"></div>
             <div class="displayHand"></div>
         </div>`);
-    players.set(id, ops.lastElementChild);
+    playerElements.set(id, ops.lastElementChild);
+    if (playerData.has(id) && playerData.get(id).name) {
+        [...ops.lastElementChild.getElementsByClassName('name')].forEach((elem) => {
+            elem.innerText = playerData.get(id).name;
+        });
+    }
 }
 
 function setDisplayHand(playerId, hand) {
-    let handDiv = players.get(playerId).getElementsByClassName('displayHand')[0];
+    let handDiv = playerElements.get(playerId).getElementsByClassName('displayHand')[0];
     handDiv.innerHTML = ''; // clear the hand first
     for (let index = 0; index < hand.length; index++) {
         const card = hand[index];
@@ -40,7 +46,7 @@ function setDisplayHand(playerId, hand) {
 
 clientHandlers['start-round'] = function(cardsPerPlayer) {
     let displayHand = new Array(cardsPerPlayer).fill(cardBack);
-    players.keys().forEach((playerId) => {
+    playerElements.keys().forEach((playerId) => {
         setDisplayHand(playerId, displayHand);
     });
 };
@@ -53,7 +59,7 @@ clientHandlers['start-game'] = function(data) {
         }
     });
     picker = data.firstPlayer;
-    players.get(picker).classList.add('inPower');
+    playerElements.get(picker).classList.add('inPower');
 };
 
 clientHandlers['set-role'] = function(role) {
@@ -65,8 +71,20 @@ clientHandlers['set-cards'] = function(cards) {
 };
 
 clientHandlers['card-picked'] = function(data) {
-    players.get(picker).classList.remove('inPower');
+    playerElements.get(picker).classList.remove('inPower');
     picker = data.pickee;
     setDisplayHand(data.pickee, data.hand);
-    players.get(picker).classList.add('inPower');
+    playerElements.get(picker).classList.add('inPower');
 };
+
+clientHandlers['change-name'] = function(data) {
+    if (!playerData.has(data.playerId)) {
+        playerData.set(data.playerId, {});
+    }
+    playerData.get(data.playerId).name = data.name;
+    if (playerElements.has(data.playerId)) {
+        [...playerElements.get(data.playerId).getElementsByClassName('name')].forEach((elem) => {
+            elem.innerText = data.name;
+        });
+    }
+}

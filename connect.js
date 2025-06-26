@@ -12,14 +12,20 @@ setStartCb((id) => {
     console.log(`Created server with host id: ${id}`);
     let url = generateRoomURL(id);
     
-    document.getElementById("start-box-content").innerHTML = `<div>
+    document.getElementById("connectSection").innerHTML = `<div>
     Room Code: ${id}<br/>Room Link: ${url.href}</div>
     <button id="copyLink">Copy Room Link</button>
     <button id="shareLink">Share Room Link</button>
-    <button id="startGame">Start Game</button>
-    <div>Name: <input id="playerName" /></div>`;
+    <div>Name: <input id="playerName" /></div>
+    <button id="startGame">Start Game</button>`;
+    document.getElementById("start-box-content").insertAdjacentHTML('beforeend', 
+        `<div id="setupSection">
+        <button id="startGame">Start Game</button>
+        </div>`);
     document.getElementById("startGame").addEventListener("click", () => {
-        sendToServer('set-name', document.getElementById('playerName').value);
+        if (document.getElementById('playerName')) {
+            sendToServer('set-name', document.getElementById('playerName').value);
+        }
         startGame();
         document.getElementById('modal').style.display = 'none';
     });
@@ -50,7 +56,7 @@ let hostId = new URLSearchParams(document.location.search).get('host');
 
 if (hostId) {
     connectToServer(hostId);
-    document.getElementById("start-box-content").innerHTML = `<div>Name: <input id="playerName" /><button id="setName">Confirm</button></div>`;
+    document.getElementById("connectSection").innerHTML = `<div>Name: <input id="playerName" /><button id="setName">Confirm</button></div>`;
     document.getElementById('setName').addEventListener("click", () => {
         sendToServer('set-name', document.getElementById('playerName').value);
         document.getElementById('modal').style.display = 'none';
@@ -59,14 +65,14 @@ if (hostId) {
 else {
     document.getElementById("connectButton").addEventListener("click", () => {
         connectToServer(document.getElementById("serverId").value);
-        document.getElementById("start-box-content").innerHTML = `<div>Name: <input id="playerName" /><button id="setName">Confirm</button></div>`;
+        document.getElementById("connectSection").innerHTML = `<div>Name: <input id="playerName" /><button id="setName">Confirm</button></div>`;
         document.getElementById('setName').addEventListener("click", () => {
             sendToServer('set-name', document.getElementById('playerName').value);
             document.getElementById('modal').style.display = 'none';
         });
     });
     document.getElementById("startButton").addEventListener("click", () => {
-        document.getElementById("start-box-content").innerHTML = '';
+        document.getElementById("connectSection").innerHTML = '';
         startServer();
     });
 }

@@ -175,6 +175,11 @@ function evilWin() {
     console.log('evil win');
 }
 
+function showRestartScreen() {
+    document.getElementById("connectSection")?.remove();
+    document.getElementById("startGame").innerText = "Start New game";
+}
+
 function updateCounts() {
     let data = {
         blackCount: `${numPlayers-blacksLeft}/${numPlayers}`,

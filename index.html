@@ -8,10 +8,12 @@
 
 <div id="modal">
 <div id="start-box-content">
-    <button id="startButton">Create Room</button>
-    <div>
-        <input id="serverId"/>
-        <button id="connectButton">Join Room</button>
+    <div id="connectSection">
+        <button id="startButton">Create Room</button>
+        <div>
+            <input id="serverId"/>
+            <button id="connectButton">Join Room</button>
+        </div>
     </div>
 </div>
 </div>
@@ -24,15 +26,15 @@
             <div class="name"></div>
             <div class="displayHand"></div>
             <div id="hiddenHand"></div>
+            <div id="myRole"></div>
         </div>
         <div>
             <div>Blacks: <span id="blackCount">0/1</span></div>
             <div id="jokerText">Jokers: <span id="jokerCount">0/2</span></div>
-        </div>
-        <div>
             <div>Primer: <span id="primerCount">0/1</span></div>
             <div>Picks left: <span id="pickCount">1/1</span></div>
         </div>
+        <div id="goal"></div>
     </div>
 </div>
 

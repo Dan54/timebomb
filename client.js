@@ -6,6 +6,7 @@ let myId = -1;
 let playerElements = new Map();
 let picker = -1;
 let playerData = new Map();
+let isBlackAce = false;
 
 clientHandlers['connect'] = function(data) {
     console.log(`Connected to server, we are ${data.id}`);
@@ -69,7 +70,30 @@ clientHandlers['start-game'] = function(data) {
 };
 
 clientHandlers['set-role'] = function(role) {
-
+    let roleText = "Unknown";
+    let goal = "Unknown";
+    isBlackAce = false;
+    switch (role) {
+        case 'good':
+            roleText = "Good";
+            goal = "Pick all the blacks, do not explode";
+            break;
+        case 'bad':
+            roleText = "Bad";
+            goal = "Get the bomb picked";
+            break;
+        case 'black-ace':
+            roleText = "Black ace";
+            goal = "Don't get picked";
+            isBlackAce = true;
+            break;
+        case 'red-ace':
+            roleText = "Red ace";
+            goal = "Pick the last card";
+            break;
+    }
+    document.getElementById("myRole").innerText = `Role: ${roleText}`;
+    document.getElementById("goal").innerText = goal;
 };
 
 clientHandlers['set-cards'] = function(cards) {
@@ -79,6 +103,10 @@ clientHandlers['set-cards'] = function(cards) {
 
 clientHandlers['card-picked'] = function(data) {
     playerElements.get(picker).classList.remove('inPower');
+    if (data.pickee === myId && isBlackAce) {
+        document.getElementById("goal").innerText = `You are on ${playerData.get(picker).name}'s team`;
+        isBlackAce = false;
+    }
     picker = data.pickee;
     setDisplayHand(data.pickee, data.hand);
     playerElements.get(picker).classList.add('inPower');

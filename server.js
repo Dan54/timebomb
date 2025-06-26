@@ -57,11 +57,14 @@ export function startGame() {
             redAceIn = 1;
             blackAceIn = 0;
         }
-        badIn = Math.floor((numPlayers + 2) / 3);
-        goodIn = badIn * 2;
-        redAceIn = 1;
-        blackAceIn = 1;
+        else {
+            badIn = Math.floor((numPlayers + 2) / 3);
+            goodIn = badIn * 2;
+            redAceIn = 1;
+            blackAceIn = 1;
+        }
     }
+    console.log(badIn, goodIn, redAceIn, blackAceIn);
     let roleList = new Array(goodIn).fill('good').concat(new Array(badIn).fill('bad')).concat(new Array(redAceIn).fill('red-ace')).concat(new Array(blackAceIn).fill('black-ace'));
     curPicker = players.keys().next().value;
     firstPlayer = curPicker;

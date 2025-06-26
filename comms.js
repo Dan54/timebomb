@@ -28,6 +28,13 @@ export function createServer(cb) {
     });
 }
 
+export function disconnect() {
+    conn?.close();
+    peer?.disconnect();
+    conn = null;
+    peer = null;
+}
+
 export function connectToServer(serverId) {
     if (conn !== null) {
         return;

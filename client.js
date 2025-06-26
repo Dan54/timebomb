@@ -1,4 +1,5 @@
 import { sendToServer, clientHandlers } from "./comms.js";
+import { showUsernamePrompt } from "./connect.js";
 
 const cardBack = '&#x1F0A0;';
 
@@ -11,6 +12,7 @@ let isBlackAce = false;
 clientHandlers['connect'] = function(data) {
     console.log(`Connected to server, we are ${data.id}`);
     myId = data.id;
+    showUsernamePrompt();
 };
 
 function createOtherPlayer(id) {

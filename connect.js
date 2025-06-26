@@ -1,4 +1,4 @@
-import {connectToServer, sendToServer} from "./comms.js";
+import {connectToServer, disconnect, sendToServer} from "./comms.js";
 import {} from "./client.js";
 import {startServer, startGame, setStartCb} from "./server.js";
 
@@ -64,26 +64,39 @@ setStartCb((id) => {
 });
 
 let hostId = new URLSearchParams(document.location.search).get('host');
+let isServer = false;
+let connected = false;
 
-if (hostId) {
-    connectToServer(hostId);
+export function showUsernamePrompt() {
+    if (isServer || connected) { // server UI handled elsewhere
+        return;
+    }
+    connected = true;
+    document.getElementById("connectSection").hidden = false;
     document.getElementById("connectSection").innerHTML = `<div>Name: <input id="playerName" /><button id="setName">Confirm</button></div>`;
     document.getElementById('setName').addEventListener("click", () => {
         sendToServer('set-name', document.getElementById('playerName').value);
         document.getElementById('modal').style.display = 'none';
     });
 }
-else {
-    document.getElementById("connectButton").addEventListener("click", () => {
-        connectToServer(document.getElementById("serverId").value);
-        document.getElementById("connectSection").innerHTML = `<div>Name: <input id="playerName" /><button id="setName">Confirm</button></div>`;
-        document.getElementById('setName').addEventListener("click", () => {
-            sendToServer('set-name', document.getElementById('playerName').value);
-            document.getElementById('modal').style.display = 'none';
-        });
-    });
-    document.getElementById("startButton").addEventListener("click", () => {
-        document.getElementById("connectSection").innerHTML = '';
-        startServer();
-    });
+
+if (hostId) {
+    document.getElementById("connectSection").hidden = true;
+    connectToServer(hostId);
+    setTimeout(() => {
+        if (!connected) {
+            disconnect();
+            document.getElementById("connectSection").hidden = false;
+            console.warn("Could not connect to provided host, showing connection UI");
+        }
+    }, 2000);
 }
+document.getElementById("connectButton").addEventListener("click", () => {
+    connectToServer(document.getElementById("serverId").value);
+    document.getElementById("connectSection").hidden = true;
+});
+document.getElementById("startButton").addEventListener("click", () => {
+    document.getElementById("connectSection").innerHTML = '';
+    isServer = true;
+    startServer();
+});

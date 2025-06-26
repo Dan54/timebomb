@@ -31,7 +31,7 @@ body {
     text-align: center;
 }
 .player > .displayHand {
-    font-size: 200%;
+    font-size: 300%;
     user-select: none;
     -webkit-user-select: none;
 }

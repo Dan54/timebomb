@@ -28,6 +28,8 @@ let curPicker = 0;
 let pickedThisRound = 0;
 const cardBack = '&#x1F0A0;';
 let firstPlayer = -1;
+let scaryJokers = false;
+let gameActive = false;
 
 let goodIn = 0;
 let badIn = 0;
@@ -45,6 +47,7 @@ function shuffleArray(array) {
 }
 
 export function startGame() {
+    gameActive = true;
     canJoin = false;
     numPlayers = players.size;
     blacksLeft = numPlayers;
@@ -74,6 +77,9 @@ export function startGame() {
         let role = roleList.pop();
         playerData.role = role;
         sendToClient(id, 'set-role', role);
+        if (playerData.name) { // make sure everyone knows the name
+            broadcast('change-name', {playerId: id, name: playerData.name});
+        }
     });
     startRound();
 }
@@ -82,6 +88,10 @@ function startRound() {
     let cardList = new Array(numPlayers * cardsPerPlayer).fill('R');
     let i = 0;
     pickedThisRound = 0;
+
+    scaryJokers = primerLeft === 0;
+    updateCounts();
+
     for (let c = 0; c < blacksLeft; c++) {
         cardList[i++] = 'B';
     }
@@ -96,8 +106,8 @@ function startRound() {
     i = 0;
     broadcast('start-round', cardsPerPlayer);
     players.forEach((playerData, id) => {
-        let cards = cardList.slice(i, i + 4);
-        i += 4;
+        let cards = cardList.slice(i, i + cardsPerPlayer);
+        i += cardsPerPlayer;
         playerData.cards = cards;
         playerData.displayHand = new Array(cardsPerPlayer).fill(cardBack);
         sendToClient(id, 'set-cards', cards);
@@ -105,7 +115,7 @@ function startRound() {
 }
 
 function pickCard(id, data) {
-    if (id !== curPicker) {
+    if (id !== curPicker || !gameActive) {
         return;
     }
     let pickee = data.pickee;
@@ -124,9 +134,59 @@ function pickCard(id, data) {
     curPicker = pickee;
     broadcast('card-picked', {picker: id, pickee: pickee, hand: displayHand});
     sendToClient(pickee, 'set-cards', cards);
+    switch (card) {
+        case 'B':
+            blacksLeft -= 1;
+            if (blacksLeft === 0) {
+                goodWin();
+            }
+            break;
+        case 'J':
+            if (scaryJokers) {
+                evilWin();
+            }
+            jokersLeft -= 1;
+            scaryJokers = jokersLeft > 0;
+            break;
+        case '&clubs;':
+            scaryJokers = jokersLeft > 0;
+            primerLeft = 0;
+            break;
+        case '&spades;':
+            evilWin();
+            break;
+    }
+    pickedThisRound += 1;
+    updateCounts();
+    if (pickedThisRound === numPlayers && gameActive) {
+        cardsPerPlayer -= 1;
+        setTimeout(startRound, 3000); // start next round in 3 seconds
+    }
 }
 serverHandlers['pick-card'] = pickCard;
 
+function goodWin() {
+    gameActive = false;
+    console.log('good win');
+}
+
+function evilWin() {
+    gameActive = false;
+    console.log('evil win');
+}
+
+function updateCounts() {
+    let data = {
+        blackCount: `${numPlayers-blacksLeft}/${numPlayers}`,
+        jokerCount: `${2-jokersLeft}/2`,
+        primerCount: `${1-primerLeft}/1`,
+        pickCount: `${numPlayers-pickedThisRound}/${numPlayers}`,
+        scaryJokers: scaryJokers
+    };
+    broadcast('update-counts', data);
+}
+
 serverHandlers['set-name'] = function(id, name) {
+    players.get(id).name = name;
     broadcast('change-name', {playerId: id, name: name});
 }

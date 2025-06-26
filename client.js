@@ -54,10 +54,16 @@ clientHandlers['start-round'] = function(cardsPerPlayer) {
 clientHandlers['start-game'] = function(data) {
     document.getElementById('otherPlayers').innerHTML = '';
     data.players.forEach(pid => {
-        if (pid !== myId || true) {
+        if (pid !== myId) {
             createOtherPlayer(pid);
         }
     });
+    playerElements.set(myId, document.getElementById('myPlayer'));
+    if (playerData.has(myId) && playerData.get(myId).name) {
+        [...document.getElementById('myPlayer').getElementsByClassName('name')].forEach((elem) => {
+            elem.innerText = playerData.get(myId).name;
+        });
+    }
     picker = data.firstPlayer;
     playerElements.get(picker).classList.add('inPower');
 };
@@ -67,7 +73,8 @@ clientHandlers['set-role'] = function(role) {
 };
 
 clientHandlers['set-cards'] = function(cards) {
-
+    cards.sort();
+    document.getElementById('hiddenHand').innerHTML = cards.join('');
 };
 
 clientHandlers['card-picked'] = function(data) {
@@ -86,5 +93,20 @@ clientHandlers['change-name'] = function(data) {
         [...playerElements.get(data.playerId).getElementsByClassName('name')].forEach((elem) => {
             elem.innerText = data.name;
         });
+    }
+}
+
+clientHandlers['update-counts'] = function(data) {
+    for (const counter in data) {
+        if (counter === 'scaryJokers') {
+            continue;
+        }
+        document.getElementById(counter).innerText = data[counter];
+    }
+    if (data.scaryJokers) {
+        document.getElementById('jokerText').classList.add('scaryJokers');
+    }
+    else {
+        document.getElementById('jokerText').classList.remove('scaryJokers');
     }
 }

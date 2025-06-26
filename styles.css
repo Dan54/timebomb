@@ -119,6 +119,7 @@ button {
 input {
     font-size: inherit;
     border-radius: 5px;
+    width: 10em;
 }
 input[type=number] {
     width: 2em;

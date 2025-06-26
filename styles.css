@@ -1,3 +1,8 @@
+body {
+    font-size: 150%;
+}
+
+
 #otherPlayers {
     display: flex;
     flex-flow: row wrap;
@@ -14,8 +19,8 @@
     flex-direction: column;
     justify-content: space-between;
     align-items: center;
-    width: 150px;
-    height: 100px;
+    width: 300px;
+    height: 250px;
 }
 .inPower {
     outline-width: 5px;
@@ -26,7 +31,7 @@
     text-align: center;
 }
 .player > .displayHand {
-    font-size: xx-large;
+    font-size: 200%;
     user-select: none;
     -webkit-user-select: none;
 }
@@ -55,7 +60,9 @@
   }
 
 button {
-    padding: 5px;
-    border-radius: 5px;
+    padding: 10px;
+    border-radius: 10px;
     border-width: 1px;
+    margin: 10px;
+    font-size: inherit;
 }

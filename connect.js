@@ -16,7 +16,7 @@ setStartCb((id) => {
     Room Code: ${id}<br/>Room Link: ${url.href}</div>
     <button id="copyLink">Copy Room Link</button>
     <button id="shareLink">Share Room Link</button>
-    <div>Name: <input id="playerName" /></div>`;
+    <div id="nameBox">Name: <input id="playerName" /></div>`;
     document.getElementById("start-box-content").insertAdjacentHTML('beforeend', 
         `<div id="setupSection">
         <div><span id="playerCount">1</span> player</div>

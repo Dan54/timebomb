@@ -6,32 +6,21 @@
 </head>
 <body>
 
-<input id="serverId"/><button id="connectButton">Connect to server</button>
-<input id="chatBox"/><button id="sendButton">Send message</button>
-<button id="startButton">Start server</button>
-<button id="startGame">Start game</button>
+<div id="modal">
+<div id="start-box-content">
+    <button id="startButton">Create Room</button>
+    <div>
+        <input id="serverId"/>
+        <button id="connectButton">Join Room</button>
+    </div>
+</div>
+</div>
 
 <div id="gameArea">
     <div id="otherPlayers">
     </div>
 </div>
 
-<script type="module">
-    import {connectToServer} from "./comms.js";
-    import {sendMessage} from "./client.js";
-    import {startServer, startGame} from "./server.js";
-    document.getElementById("connectButton").addEventListener("click", () => {
-        connectToServer(document.getElementById("serverId").value);
-    });
-    document.getElementById("sendButton").addEventListener("click", () => {
-        sendMessage(document.getElementById("chatBox").value);
-    });
-    document.getElementById("startButton").addEventListener("click", () => {
-        startServer();
-    });
-    document.getElementById("startGame").addEventListener("click", () => {
-        startGame();
-    });
-</script>
+<script type="module" src="connect.js"></script>
 </body>
 </html>

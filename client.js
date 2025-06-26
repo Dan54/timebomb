@@ -6,10 +6,6 @@ let myId = -1;
 let players = new Map();
 let picker = -1;
 
-clientHandlers['chat'] = function(data) {
-    console.log(data);
-};
-
 clientHandlers['connect'] = function(data) {
     console.log(`Connected to server, we are ${data.id}`);
     myId = data.id;
@@ -74,8 +70,3 @@ clientHandlers['card-picked'] = function(data) {
     setDisplayHand(data.pickee, data.hand);
     players.get(picker).classList.add('inPower');
 };
-
-
-export function sendMessage(msg) {
-    sendToServer('chat', msg);
-}

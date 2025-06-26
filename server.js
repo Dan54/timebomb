@@ -9,14 +9,14 @@ serverHandlers['connect'] = function(id, data) {
     }
 };
 
-serverHandlers['chat'] = function(id, data) {
-    broadcast('chat', `${id}: ${data}`);
+let startCb;
+
+export function setStartCb(cb) {
+    startCb = cb;
 }
 
 export function startServer() {
-    createServer((id) => {
-        console.log(`Created server with host id: ${id}`);
-    });
+    createServer(startCb);
     connectToLocal();
 }
 

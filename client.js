@@ -54,6 +54,9 @@ clientHandlers['start-round'] = function(cardsPerPlayer) {
 
 clientHandlers['start-game'] = function(data) {
     document.getElementById('otherPlayers').innerHTML = '';
+    if (!document.getElementById('connectSection')) { // hide the result dialog if showing
+        document.getElementById('modal').style.display = 'none';
+    }
     data.players.forEach(pid => {
         if (pid !== myId) {
             createOtherPlayer(pid);
@@ -137,4 +140,29 @@ clientHandlers['update-counts'] = function(data) {
     else {
         document.getElementById('jokerText').classList.remove('scaryJokers');
     }
+}
+
+clientHandlers['game-over'] = function(data) {
+    document.getElementById("connectSection")?.remove();
+    document.getElementById("resultsSection")?.remove();
+    let resultSect = document.createElement('div');
+    resultSect.id = "resultsSection";
+    resultSect.innerHTML = `<div id="resultHeadline"></div><div id="winners">Winners:</div><div id="losers">Losers:</div>`;
+    document.getElementById('start-box-content').insertAdjacentElement('afterbegin', resultSect);
+    document.getElementById('resultHeadline').innerText = data.headline;
+    let winnerElem = document.getElementById('winners');
+    data.winners.forEach((g) => {
+        let para = document.createElement('p');
+        console.log(g);
+        para.innerText = `${g[0]}: ${g[1]}`;
+        winnerElem.insertAdjacentElement('beforeend', para);
+    });
+    let loserElem = document.getElementById('losers');
+    data.losers.forEach((g) => {
+        let para = document.createElement('p');
+        console.log(g);
+        para.innerText = `${g[0]}: ${g[1]}`;
+        loserElem.insertAdjacentElement('beforeend', para);
+    });
+    document.getElementById('modal').style.display = 'flex';
 }

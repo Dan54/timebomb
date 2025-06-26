@@ -128,3 +128,11 @@ input[type=number] {
 .scaryJokers {
     color: darkred;
 }
+
+p {
+    margin-block-start: 0.25em;
+    margin-block-end: 0.25em;
+}
+#resultHeadline {
+    margin-bottom: 0.25em;
+}

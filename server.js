@@ -33,7 +33,7 @@ let blacksLeft = 0;
 let jokersLeft = 0;
 let primerLeft = 0;
 let numPlayers = 0;
-let curPicker = 0;
+let curPicker = -1;
 let pickedThisRound = 0;
 const cardBack = '&#x1F0A0;';
 let firstPlayer = -1;
@@ -82,22 +82,25 @@ export function startGame() {
     goodIn = parseInt(document.getElementById('goodCount').value || '0');
     badIn = parseInt(document.getElementById('badCount').value || '0');
     redAceIn = parseInt(document.getElementById('redAceCount').value || '0');
-    goodIn = parseInt(document.getElementById('blackAceCount').value || '0');
+    blackAceIn = parseInt(document.getElementById('blackAceCount').value || '0');
     cardsPerPlayer = parseInt(document.getElementById('cardCount').value || '4');
     if (goodIn + badIn + redAceIn + blackAceIn < numPlayers 
-        || [goodIn, badIn, redAceIn, blackAceIn, cardsPerPlayer].some((n) => Number.isInteger(n) || n < 0) 
+        || [goodIn, badIn, redAceIn, blackAceIn, cardsPerPlayer].some((n) => !Number.isInteger(n) || n < 0) 
         || cardsPerPlayer < 2) {
         setDefaultCounts();
     }
     console.log(badIn, goodIn, redAceIn, blackAceIn);
     let roleList = new Array(goodIn).fill('good').concat(new Array(badIn).fill('bad')).concat(new Array(redAceIn).fill('red-ace')).concat(new Array(blackAceIn).fill('black-ace'));
-    curPicker = players.keys().next().value;
+    if (!players.has(curPicker)) {
+        curPicker = players.keys().next().value;
+    }
     firstPlayer = curPicker;
     broadcast('start-game', {firstPlayer: curPicker, players: Array.from(players.keys())});
     shuffleArray(roleList);
     players.forEach((playerData, id) => { // (value, key) for some reason
         let role = roleList.pop();
         playerData.role = role;
+        playerData.newRole = undefined; // reset black ace role
         sendToClient(id, 'set-role', role);
         if (playerData.name) { // make sure everyone knows the name
             broadcast('change-name', {playerId: id, name: playerData.name});
@@ -150,9 +153,15 @@ function pickCard(id, data) {
     if (cardIndex < 0 || cardIndex >= displayHand.length || displayHand[cardIndex] !== cardBack) {
         return;
     }
+
+    if (players.get(pickee).role === 'black-ace' && !players.get(pickee).newRole) { // handle black ace
+        players.get(pickee).newRole = normalised_role(id);
+    }
+
     shuffleArray(cards);
     let card = cards.pop();
     displayHand[cardIndex] = card;
+    let lastPick = curPicker;
     curPicker = pickee;
     broadcast('card-picked', {picker: id, pickee: pickee, hand: displayHand});
     sendToClient(pickee, 'set-cards', cards);
@@ -160,12 +169,12 @@ function pickCard(id, data) {
         case 'B':
             blacksLeft -= 1;
             if (blacksLeft === 0) {
-                goodWin();
+                goodWin(lastPick);
             }
             break;
         case 'J':
             if (scaryJokers) {
-                evilWin();
+                evilWin(lastPick);
             }
             jokersLeft -= 1;
             scaryJokers = jokersLeft > 0;
@@ -175,7 +184,7 @@ function pickCard(id, data) {
             primerLeft = 0;
             break;
         case '&spades;':
-            evilWin();
+            evilWin(lastPick);
             break;
     }
     pickedThisRound += 1;
@@ -187,19 +196,158 @@ function pickCard(id, data) {
 }
 serverHandlers['pick-card'] = pickCard;
 
-function goodWin() {
+function goodWin(lastPick) {
     gameActive = false;
-    console.log('good win');
+    let aceWinners = getAceWinners(lastPick);
+    let winners;
+    if (aceWinners.length !== 0) {
+        winners = announceWinners((id) => aceWinners.indexOf(id) !== -1, 'Ace(s) Win!');
+    }
+    else {
+        winners = announceWinners((id) => normalised_role(id) === 'good', 'Good Team Wins!');
+    }
+    setNextStart(winners, lastPick);
 }
 
-function evilWin() {
+function evilWin(lastPick) {
     gameActive = false;
-    console.log('evil win');
+    let aceWinners = getAceWinners(lastPick);
+    let winners;
+    if (aceWinners.length !== 0) {
+        winners = announceWinners((id) => aceWinners.indexOf(id) !== -1, 'Ace(s) Win!');
+    }
+    else {
+        winners = announceWinners((id) => normalised_role(id) === 'bad', 'Bad Team Wins!');
+    }
+    setNextStart(winners, lastPick);
+}
+
+function normalised_role(id) {
+    let player = players.get(id);
+    let role = player.role;
+    if (role === 'black-ace' && player.newRole) {
+        if (player.newRole === 'black-ace') {
+            let startRole = players.get(firstPlayer).newRole;
+            if (startRole === 'black-ace') {
+                role = 'loser';
+            }
+            else if (startRole) {
+                role = startRole;
+            }
+        }
+        else {
+            role = player.newRole;
+        }
+    }
+    return role;
+}
+
+function getAceWinners(lastPick) {
+    let winners = [];
+    if (normalised_role(lastPick) === 'red-ace') {
+        winners.push(lastPick);
+    }
+    winners.push(...players.keys().filter((id) => normalised_role(id) === 'black-ace'));
+    return winners;
+}
+
+function fullRoleName(id) {
+    switch (players.get(id).role) {
+        case 'good':
+            return 'Good';
+        case 'bad':
+            return 'Bad';
+        case 'red-ace':
+            return 'Red ace';
+        case 'black-ace':
+            if (players.get(id).newRole) {
+                switch (normalised_role(id)) {
+                    case 'good':
+                        return 'Black ace (Good)';
+                    case 'bad':
+                        return 'Black ace (Bad)';
+                    case 'red-ace':
+                        return 'Black ace (Red ace)';
+                    case 'black-ace':
+                    case 'loser':
+                        return 'Black ace (Black ace)';
+                }
+            }
+            return 'Black ace';
+    }
+}
+
+function roleOrder(role) {
+    switch (role) {
+        case 'Good':
+            return 0;
+        case 'Bad':
+            return 0;
+        case 'Red ace':
+            return 1;
+        case 'Black ace (Red ace)':
+            return 2;
+        case 'Black ace':
+            return 3;
+        case 'Black ace (Black ace)':
+            return 5;
+        default:
+            return 4;
+    }
+}
+
+function announceWinners(pred, headline) {
+    let winnerSet = new Set();
+    let winners = new Map();
+    let losers = new Map();
+    players.forEach((playerData, id) => {
+        let role = fullRoleName(id);
+        if (pred(id)) {
+            if (!winners.has(role)) {
+                winners.set(role, []);
+            }
+            winnerSet.add(id);
+            winners.get(role).push(playerData.name);
+        }
+        else {
+            if (!losers.has(role)) {
+                losers.set(role, []);
+            }
+            losers.get(role).push(playerData.name);
+        }
+    });
+    let winnerGroupArray = [...winners.entries().map((e) => [roleOrder(e[0]), e[0], e[1].join(', ')])];
+    let loserGroupArray = [...losers.entries().map((e) => [roleOrder(e[0]), e[0], e[1].join(', ')])];
+    winnerGroupArray.sort();
+    loserGroupArray.sort();
+    setTimeout(() => broadcast('game-over', {
+        headline: headline, 
+        winners: winnerGroupArray.map((g) => [g[1], g[2]]),
+        losers: loserGroupArray.map((g) => [g[1], g[2]])
+    }), 3000);
+    return winnerSet;
+}
+
+function setNextStart(winners, lastPick) {
+    if (winners.has(lastPick) && (normalised_role(lastPick) === players.get(lastPick).role || normalised_role(lastPick) === 'red-ace')) {
+        firstPlayer = lastPick;
+    }
+    else if (winners.has(curPicker) && normalised_role(curPicker) === players.get(curPicker).role) {
+        firstPlayer = curPicker;
+    }
+    else if (winners.size !== 0) {
+        let winnerArray = [...winners];
+        firstPlayer = winnerArray[Math.floor(Math.random() * winnerArray.length)];
+    }
+    else {
+        let winnerArray = [...players.keys()];
+        firstPlayer = winnerArray[Math.floor(Math.random() * winnerArray.length)];
+    }
 }
 
 function showRestartScreen() {
     document.getElementById("connectSection")?.remove();
-    document.getElementById("startGame").innerText = "Start New game";
+    document.getElementById("startGame").innerText = "Start New Game";
 }
 
 function updateCounts() {

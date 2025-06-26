@@ -27,6 +27,8 @@
 }
 .player > .displayHand {
     font-size: xx-large;
+    user-select: none;
+    -webkit-user-select: none;
 }
 /* The Modal (background) */
 #modal {

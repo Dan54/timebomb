@@ -1,18 +1,25 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Page Title</title>
+<title>Timebomb</title>
+<link rel="stylesheet" href="./styles.css">
 </head>
 <body>
 
 <input id="serverId"/><button id="connectButton">Connect to server</button>
 <input id="chatBox"/><button id="sendButton">Send message</button>
 <button id="startButton">Start server</button>
+<button id="startGame">Start game</button>
+
+<div id="gameArea">
+    <div id="otherPlayers">
+    </div>
+</div>
 
 <script type="module">
     import {connectToServer} from "./comms.js";
     import {sendMessage} from "./client.js";
-    import {startServer} from "./server.js";
+    import {startServer, startGame} from "./server.js";
     document.getElementById("connectButton").addEventListener("click", () => {
         connectToServer(document.getElementById("serverId").value);
     });
@@ -22,7 +29,9 @@
     document.getElementById("startButton").addEventListener("click", () => {
         startServer();
     });
+    document.getElementById("startGame").addEventListener("click", () => {
+        startGame();
+    });
 </script>
-
 </body>
 </html>

@@ -32,7 +32,7 @@ function setDisplayHand(playerId, hand) {
     for (let index = 0; index < hand.length; index++) {
         const card = hand[index];
         const span = document.createElement('span');
-        span.innerHTML = card;
+        span.innerHTML = card.replaceAll('<', '&lt;');
         handDiv.appendChild(span);
         if (playerId !== myId && card === cardBack) {
             span.addEventListener('click', () => {
@@ -74,7 +74,7 @@ clientHandlers['set-role'] = function(role) {
 
 clientHandlers['set-cards'] = function(cards) {
     cards.sort();
-    document.getElementById('hiddenHand').innerHTML = cards.join('');
+    document.getElementById('hiddenHand').innerHTML = cards.join('').replaceAll('<', '&lt;');
 };
 
 clientHandlers['card-picked'] = function(data) {

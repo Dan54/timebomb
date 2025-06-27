@@ -34,9 +34,19 @@ html {
     align-items: center;
     box-sizing: border-box;
     height: 100%;
-    padding: 15px;
+    padding: 0 15px;
 }
-
+#bottomGameArea:has(.inPower) {
+    outline-width: 5px;
+    outline-color: gold;
+    outline-style: solid;
+}
+#pickPrompt {
+    visibility: hidden;
+}
+.inPower > #pickPrompt {
+    visibility: visible;
+}
 
 #otherPlayers {
     display: flex;

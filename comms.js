@@ -72,9 +72,9 @@ export function sendToClient(id, msgType, data) {
 }
 
 export function broadcast(msgType, data) {
-    clients.keys().forEach(client => {
+    for (const client of clients.keys()) {
         sendToClient(client, msgType, data);
-    });
+    }
     if (localId !== null) {
         sendToClient(localId, msgType, data);
     }

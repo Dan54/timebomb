@@ -39,6 +39,7 @@ const cardBack = '&#x1F0A0;';
 let firstPlayer = -1;
 let scaryJokers = false;
 let gameActive = false;
+let betweenRounds = false;
 
 let goodIn = 0;
 let badIn = 0;
@@ -137,6 +138,7 @@ function startRound() {
         playerData.displayHand = new Array(cardsPerPlayer).fill(cardBack);
         sendToClient(id, 'set-cards', cards);
     });
+    betweenRounds = false;
 }
 
 function pickCard(id, data) {
@@ -190,6 +192,7 @@ function pickCard(id, data) {
     pickedThisRound += 1;
     updateCounts();
     if (pickedThisRound === numPlayers && gameActive) {
+        betweenRounds = true;
         cardsPerPlayer -= 1;
         setTimeout(startRound, 3000); // start next round in 3 seconds
     }
@@ -247,7 +250,11 @@ function getAceWinners(lastPick) {
     if (normalised_role(lastPick) === 'red-ace') {
         winners.push(lastPick);
     }
-    winners.push(...players.keys().filter((id) => normalised_role(id) === 'black-ace'));
+    for (const id in players.keys()) {
+        if (normalised_role(id) === 'black-ace') {
+            winners.push(id)
+        }
+    }
     return winners;
 }
 

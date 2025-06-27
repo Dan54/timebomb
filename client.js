@@ -49,9 +49,9 @@ function setDisplayHand(playerId, hand) {
 
 clientHandlers['start-round'] = function(cardsPerPlayer) {
     let displayHand = new Array(cardsPerPlayer).fill(cardBack);
-    playerElements.keys().forEach((playerId) => {
+    for (const playerId of playerElements.keys()) {
         setDisplayHand(playerId, displayHand);
-    });
+    }
 };
 
 clientHandlers['start-game'] = function(data) {

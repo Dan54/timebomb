@@ -142,7 +142,7 @@ function startRound() {
 }
 
 function pickCard(id, data) {
-    if (id !== curPicker || !gameActive) {
+    if (id !== curPicker || !gameActive || betweenRounds) {
         return;
     }
     let pickee = data.pickee;
@@ -323,8 +323,8 @@ function announceWinners(pred, headline) {
             losers.get(role).push(playerData.name);
         }
     });
-    let winnerGroupArray = [...winners.entries().map((e) => [roleOrder(e[0]), e[0], e[1].join(', ')])];
-    let loserGroupArray = [...losers.entries().map((e) => [roleOrder(e[0]), e[0], e[1].join(', ')])];
+    let winnerGroupArray = [...winners.entries()].map((e) => [roleOrder(e[0]), e[0], e[1].join(', ')]);
+    let loserGroupArray = [...losers.entries()].map((e) => [roleOrder(e[0]), e[0], e[1].join(', ')]);
     winnerGroupArray.sort();
     loserGroupArray.sort();
     setTimeout(() => broadcast('game-over', {

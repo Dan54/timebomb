@@ -62,7 +62,7 @@ html {
     align-items: center;
     padding: 10px;
     flex: 1;
-    overflow-y: scroll;
+    overflow-y: auto;
 }
 .player {
     padding: 25px;

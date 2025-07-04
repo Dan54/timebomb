@@ -9,17 +9,16 @@ html {
     padding-bottom: 0;
 }
 #gameArea {
-    min-height: 100%;
+    height: 100vh;
     margin: 0;
     padding-bottom: 0;
     overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
 }
 #bottomGameArea {
-    position: absolute;
-    bottom: 0;
-    left: 0;
     width: 100%;
-    height: 300px;
+    flex: 0 0 300px;
     background-color: lightsteelblue;
     overflow-x: hidden;
     box-sizing: border-box;
@@ -62,6 +61,8 @@ html {
     justify-content: space-evenly;
     align-items: center;
     padding: 10px;
+    flex: 1;
+    overflow-y: scroll;
 }
 .player {
     padding: 25px;

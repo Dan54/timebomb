@@ -18,7 +18,7 @@ html {
 }
 #bottomGameArea {
     width: 100%;
-    flex: 0 0 300px;
+    flex: 0 0 9.5em;
     background-color: lightsteelblue;
     overflow-x: hidden;
     box-sizing: border-box;
@@ -35,8 +35,8 @@ html {
     text-align: center;
     box-sizing: border-box;
     height: 100%;
-    padding: 0 15px;
-    flex: 1 0 min(100%, 235px);
+    padding: 0 0.5em;
+    flex: 1 0 min(100%, 7.5em);
     box-sizing: border-box;
 }
 #bottomGameArea:has(.inPower) {
@@ -73,8 +73,8 @@ html {
     flex-direction: column;
     justify-content: space-evenly;
     align-items: center;
-    width: 300px;
-    height: 200px;
+    width: 9.5em;
+    height: 6em;
 }
 .player.inPower {
     outline-width: 5px;

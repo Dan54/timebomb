@@ -250,7 +250,7 @@ function getAceWinners(lastPick) {
     if (normalised_role(lastPick) === 'red-ace') {
         winners.push(lastPick);
     }
-    for (const id in players.keys()) {
+    for (const id of players.keys()) {
         if (normalised_role(id) === 'black-ace') {
             winners.push(id)
         }

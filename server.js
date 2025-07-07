@@ -6,6 +6,7 @@ let players = new Map();
 serverHandlers['connect'] = function(id, data) {
     if (canJoin) {
         players.set(id, {});
+        broadcast('name-list', [...players.keys()].map((p) => p.name || 'unnamed').join(', '));
         if (document.getElementById("goodCount")) {
             setDefaultCounts();
             document.getElementById("goodCount").value = goodIn.toString();
@@ -371,4 +372,5 @@ function updateCounts() {
 serverHandlers['set-name'] = function(id, name) {
     players.get(id).name = name;
     broadcast('change-name', {playerId: id, name: name});
+    broadcast('name-list', [...players.values()].map((p) => p.name || 'unnamed').join(', '));
 }

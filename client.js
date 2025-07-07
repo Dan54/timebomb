@@ -8,6 +8,15 @@ let playerElements = new Map();
 let picker = -1;
 let playerData = new Map();
 let isBlackAce = false;
+let named = false;
+
+export function setName(name) {
+    sendToServer('set-name', document.getElementById('playerName').value);
+    named = true;
+    if (picker !== -1) {
+        document.getElementById('modal').style.display = 'none';
+    }
+}
 
 clientHandlers['connect'] = function(data) {
     console.log(`Connected to server, we are ${data.id}`);
@@ -56,7 +65,7 @@ clientHandlers['start-round'] = function(cardsPerPlayer) {
 
 clientHandlers['start-game'] = function(data) {
     document.getElementById('otherPlayers').innerHTML = '';
-    if (!document.getElementById('connectSection')) { // hide the result dialog if showing
+    if (named) { // hide the result dialog if showing
         document.getElementById('modal').style.display = 'none';
     }
     data.players.forEach(pid => {
@@ -167,4 +176,11 @@ clientHandlers['game-over'] = function(data) {
         loserElem.insertAdjacentElement('beforeend', para);
     });
     document.getElementById('modal').style.display = 'flex';
+}
+
+clientHandlers['name-list'] = function(list) {
+    let nameListDiv = document.getElementById("playerNameList")
+    if (nameListDiv) {
+        nameListDiv.innerText = `Players: ${list}`;
+    }
 }

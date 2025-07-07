@@ -110,7 +110,7 @@ html {
     background-color: #fefefe;
     padding: 20px;
     border: 1px solid #888;
-    width: min(90%, 600px); /* Could be more or less, depending on screen size */
+    width: min(90%, 20em); /* Could be more or less, depending on screen size */
     border-radius: 5px;
     text-align: center;
 }

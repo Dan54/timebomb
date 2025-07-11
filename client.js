@@ -184,3 +184,7 @@ clientHandlers['name-list'] = function(list) {
         nameListDiv.innerText = `Players: ${list}`;
     }
 }
+
+clientHandlers['heartbeat'] = function(data) {
+    sendToServer('heartbeat', data);
+}

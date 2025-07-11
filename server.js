@@ -116,7 +116,7 @@ function startRound() {
     let i = 0;
     pickedThisRound = 0;
 
-    scaryJokers = primerLeft === 0;
+    scaryJokers = primerLeft === 0 && jokersLeft !== 0;
     updateCounts();
 
     for (let c = 0; c < blacksLeft; c++) {

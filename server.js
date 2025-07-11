@@ -93,11 +93,11 @@ export function startGame() {
     }
     console.log(badIn, goodIn, redAceIn, blackAceIn);
     let roleList = new Array(goodIn).fill('good').concat(new Array(badIn).fill('bad')).concat(new Array(redAceIn).fill('red-ace')).concat(new Array(blackAceIn).fill('black-ace'));
-    if (!players.has(curPicker)) {
-        curPicker = players.keys().next().value;
+    if (!players.has(firstPlayer)) {
+        firstPlayer = players.keys().next().value;
     }
-    firstPlayer = curPicker;
-    broadcast('start-game', {firstPlayer: curPicker, players: Array.from(players.keys())});
+    curPicker = firstPlayer;
+    broadcast('start-game', {firstPlayer: firstPlayer, players: Array.from(players.keys())});
     shuffleArray(roleList);
     players.forEach((playerData, id) => { // (value, key) for some reason
         let role = roleList.pop();

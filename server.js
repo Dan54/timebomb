@@ -6,7 +6,7 @@ let players = new Map();
 serverHandlers['connect'] = function(id, data) {
     if (canJoin) {
         players.set(id, {});
-        broadcast('name-list', [...players.keys()].map((p) => p.name || 'unnamed').join(', '));
+        broadcast('name-list', [...players.values()].map((p) => p.name || 'unnamed').join(', '));
         if (document.getElementById("goodCount")) {
             setDefaultCounts();
             document.getElementById("goodCount").value = goodIn.toString();

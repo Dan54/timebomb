@@ -30,7 +30,8 @@ export function createServer(cb) {
                             serverHandlers['connect'](cid, null);
                             break;
                         case 'rejoin':
-                            doHeartbeat((liveClients) => {
+                            let beatCount = 2;
+                            function beatHandle(liveClients) {
                                 const cid = data.rejoinId;
                                 if (liveClients.indexOf(cid) === -1) {
                                     // allow usurpation, old client is disconnected
@@ -43,10 +44,17 @@ export function createServer(cb) {
                                     serverHandlers['rejoin'](cid, null);
                                 }
                                 else {
-                                    // refuse usurpation, notify attempted rejoiner
-                                    connection.send({type: 'rejoin-fail', data: null, isControl: false});
+                                    beatCount -= 1;
+                                    if (beatCount > 0) {
+                                        doHeartbeat(beatHandle);
+                                    }
+                                    else {
+                                        // refuse usurpation, notify attempted rejoiner
+                                        connection.send({type: 'rejoin-fail', data: null, isControl: false});
+                                    }
                                 }
-                            });
+                            }
+                            doHeartbeat(beatHandle);
                             break;
                         case 'heartbeat':
                             if (data.index === heartbeatIndex) {

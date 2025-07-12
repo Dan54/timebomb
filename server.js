@@ -1,23 +1,53 @@
-import { createServer, serverHandlers, sendToClient, broadcast, connectToLocal } from "./comms.js";
+import { createServer, serverHandlers, sendToClient, broadcast, connectToLocal, doHeartbeat } from "./comms.js";
 
-let canJoin = true;
 let players = new Map();
 
-serverHandlers['connect'] = function(id, data) {
-    if (canJoin) {
-        players.set(id, {});
-        broadcast('name-list', [...players.values()].map((p) => p.name || 'unnamed').join(', '));
-        if (document.getElementById("goodCount")) {
-            setDefaultCounts();
-            document.getElementById("goodCount").value = goodIn.toString();
-            document.getElementById("badCount").value = badIn.toString();
-            document.getElementById("redAceCount").value = redAceIn.toString();
-            document.getElementById("blackAceCount").value = blackAceIn.toString();
-            document.getElementById("cardCount").value = cardsPerPlayer.toString();
-            document.getElementById("playerCount").innerText = numPlayers.toString();
+function handleJoin(id) {
+    if (activePlayers.indexOf(id) == -1) {
+        activePlayers.push(id);
+        activePlayers.sort();
+    }
+    updateNameList();
+    if (document.getElementById("goodCount") && !gameActive) {
+        setDefaultRoleCounts();
+        document.getElementById("goodCount").value = goodIn.toString();
+        document.getElementById("badCount").value = badIn.toString();
+        document.getElementById("redAceCount").value = redAceIn.toString();
+        document.getElementById("blackAceCount").value = blackAceIn.toString();
+        document.getElementById("cardCount").value = cardsPerPlayer.toString();
+    }
+    if (gameActive) {
+        sendToClient(id, 'start-game', {firstPlayer: curPicker, players: involvedPlayers});
+        involvedPlayers.forEach((ipid) => {
+            const playerData = players.get(ipid);
+            if (playerData.name) { // make sure everyone knows the name
+                sendToClient(id, 'change-name', {playerId: ipid, name: playerData.name});
+            }
+            sendToClient(id, 'set-display-hand', {playerId: ipid, hand: playerData.displayHand});
+            updateCounts(); // send the number of cards picked etc.
+        });
+        if (involvedPlayers.indexOf(id) !== -1) {
+            const playerData = players.get(id);
+            sendToClient(id, 'set-cards', playerData.cards);
+            sendToClient(id, 'set-role', playerData.role);
+            if (playerData.newRole) {
+                sendToClient(id, 'set-picked-by', playerData.pickedBy);
+            }
         }
     }
+}
+
+serverHandlers['connect'] = function(id, data) {
+    players.set(id, {});
+    handleJoin(id);
 };
+
+serverHandlers['rejoin'] = function(id, data) {
+    handleJoin(id);
+    if (!players.get(id).name) {
+        sendToClient(id, 'request-name', null);
+    }
+}
 
 let startCb;
 
@@ -25,9 +55,31 @@ export function setStartCb(cb) {
     startCb = cb;
 }
 
+function updateNameList() {
+    broadcast('name-list', activePlayers.map((p) => players.get(p).name || 'unnamed').join(', '));
+    const pc = document.getElementById("playerCount");
+    if (pc) {
+        pc.innerText = activePlayers.length.toString();
+    }
+}
+
+let heartbeatId = null;
+function updateActivePlayers() {
+    doHeartbeat((ps) => {
+        const oldlength = activePlayers.length
+        activePlayers = ps;
+        activePlayers.sort();
+        updateNameList();
+        if (!gameActive && oldlength !== activePlayers.length) {
+            setDefaultRoleCounts();
+        }
+    });
+}
+
 export function startServer() {
     createServer(startCb);
     connectToLocal();
+    heartbeatId = setInterval(updateActivePlayers, 3000);
 }
 
 let blacksLeft = 0;
@@ -41,6 +93,8 @@ let firstPlayer = -1;
 let scaryJokers = false;
 let gameActive = false;
 let betweenRounds = false;
+let involvedPlayers = null;
+let activePlayers = [];
 
 let goodIn = 0;
 let badIn = 0;
@@ -57,8 +111,8 @@ function shuffleArray(array) {
     }
 }
 
-function setDefaultCounts() {
-    numPlayers = players.size;
+function setDefaultRoleCounts() {
+    numPlayers = activePlayers.length;
     if (numPlayers <= 5) {
         goodIn = 4;
         badIn = 2;
@@ -75,9 +129,10 @@ function setDefaultCounts() {
 }
 
 export function startGame() {
+    clearInterval(heartbeatId);
     gameActive = true;
-    canJoin = false;
-    numPlayers = players.size;
+    involvedPlayers = activePlayers.slice();
+    numPlayers = involvedPlayers.length;
     blacksLeft = numPlayers;
     jokersLeft = 2;
     primerLeft = 1;
@@ -89,7 +144,7 @@ export function startGame() {
     if (goodIn + badIn + redAceIn + blackAceIn < numPlayers 
         || [goodIn, badIn, redAceIn, blackAceIn, cardsPerPlayer].some((n) => !Number.isInteger(n) || n < 0) 
         || cardsPerPlayer < 2) {
-        setDefaultCounts();
+        setDefaultRoleCounts();
     }
     console.log(badIn, goodIn, redAceIn, blackAceIn);
     let roleList = new Array(goodIn).fill('good').concat(new Array(badIn).fill('bad')).concat(new Array(redAceIn).fill('red-ace')).concat(new Array(blackAceIn).fill('black-ace'));
@@ -97,9 +152,10 @@ export function startGame() {
         firstPlayer = players.keys().next().value;
     }
     curPicker = firstPlayer;
-    broadcast('start-game', {firstPlayer: firstPlayer, players: Array.from(players.keys())});
+    broadcast('start-game', {firstPlayer: firstPlayer, players: involvedPlayers});
     shuffleArray(roleList);
-    players.forEach((playerData, id) => { // (value, key) for some reason
+    involvedPlayers.forEach((id) => {
+        const playerData = players.get(id);
         let role = roleList.pop();
         playerData.role = role;
         playerData.newRole = undefined; // reset black ace role
@@ -132,7 +188,8 @@ function startRound() {
     shuffleArray(cardList);
     i = 0;
     broadcast('start-round', cardsPerPlayer);
-    players.forEach((playerData, id) => {
+    involvedPlayers.forEach((id) => {
+        const playerData = players.get(id);
         let cards = cardList.slice(i, i + cardsPerPlayer);
         i += cardsPerPlayer;
         playerData.cards = cards;
@@ -147,7 +204,7 @@ function pickCard(id, data) {
         return;
     }
     let pickee = data.pickee;
-    if (pickee == id) {
+    if (pickee == id || involvedPlayers.indexOf(pickee) === -1) {
         return;
     }
     let cardIndex = data.cardIndex;
@@ -159,6 +216,7 @@ function pickCard(id, data) {
 
     if (players.get(pickee).role === 'black-ace' && !players.get(pickee).newRole) { // handle black ace
         players.get(pickee).newRole = normalised_role(id);
+        players.get(pickee).pickedBy = id;
     }
 
     shuffleArray(cards);
@@ -251,7 +309,7 @@ function getAceWinners(lastPick) {
     if (normalised_role(lastPick) === 'red-ace') {
         winners.push(lastPick);
     }
-    for (const id of players.keys()) {
+    for (const id of involvedPlayers) {
         if (normalised_role(id) === 'black-ace') {
             winners.push(id)
         }
@@ -308,7 +366,8 @@ function announceWinners(pred, headline) {
     let winnerSet = new Set();
     let winners = new Map();
     let losers = new Map();
-    players.forEach((playerData, id) => {
+    involvedPlayers.forEach((id) => {
+        const playerData = players.get(id);
         let role = fullRoleName(id);
         if (pred(id)) {
             if (!winners.has(role)) {
@@ -351,6 +410,10 @@ function setNextStart(winners, lastPick) {
         let winnerArray = [...players.keys()];
         firstPlayer = winnerArray[Math.floor(Math.random() * winnerArray.length)];
     }
+    if (activePlayers.length !== involvedPlayers.length) { // if players have joined, then set role counts to default
+        setDefaultRoleCounts();
+    }
+    heartbeatId = setInterval(updateActivePlayers, 3000);
 }
 
 function showRestartScreen() {
@@ -372,5 +435,5 @@ function updateCounts() {
 serverHandlers['set-name'] = function(id, name) {
     players.get(id).name = name;
     broadcast('change-name', {playerId: id, name: name});
-    broadcast('name-list', [...players.values()].map((p) => p.name || 'unnamed').join(', '));
+    updateNameList();
 }

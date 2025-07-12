@@ -1,4 +1,4 @@
-import { sendToServer, clientHandlers } from "./comms.js";
+import { sendToServer, clientHandlers, getHost } from "./comms.js";
 import { showUsernamePrompt } from "./connect.js";
 
 const cardBack = '&#x1F0A0;';
@@ -22,7 +22,29 @@ clientHandlers['connect'] = function(data) {
     console.log(`Connected to server, we are ${data.id}`);
     myId = data.id;
     showUsernamePrompt();
+    const host = getHost();
+    window.localStorage.setItem('host', host);
+    window.localStorage.setItem('id', myId.toString());
+    window.sessionStorage.setItem('host', host);
+    window.sessionStorage.setItem('id', myId.toString());
 };
+
+clientHandlers['rejoin-success'] = function(data) {
+    console.log(`Connected to server, we are ${data.id}`);
+    named = true;
+    myId = data.id;
+    const host = getHost();
+    window.localStorage.setItem('host', host);
+    window.localStorage.setItem('id', myId.toString());
+    window.sessionStorage.setItem('host', host);
+    window.sessionStorage.setItem('id', myId.toString());
+}
+
+clientHandlers['request-name'] = function(data) {
+    named = false;
+    showUsernamePrompt();
+    document.getElementById('modal').style.display = 'flex';
+}
 
 function createOtherPlayer(id) {
     let ops = document.getElementById('otherPlayers');
@@ -64,7 +86,9 @@ clientHandlers['start-round'] = function(cardsPerPlayer) {
 };
 
 clientHandlers['start-game'] = function(data) {
+    // clean up any existing player elems
     document.getElementById('otherPlayers').innerHTML = '';
+    playerElements = new Map();
     if (named) { // hide the result dialog if showing
         document.getElementById('modal').style.display = 'none';
     }
@@ -73,11 +97,21 @@ clientHandlers['start-game'] = function(data) {
             createOtherPlayer(pid);
         }
     });
-    playerElements.set(myId, document.getElementById('myPlayer'));
-    if (playerData.has(myId) && playerData.get(myId).name) {
-        [...document.getElementById('myPlayer').getElementsByClassName('name')].forEach((elem) => {
-            elem.innerText = playerData.get(myId).name;
-        });
+    if (data.players.indexOf(myId) !== -1) {
+        document.getElementById('myPlayer').innerHTML = `<div id="pickPrompt">Pick a card</div>
+            <div class="name"></div>
+            <div class="displayHand"></div>
+            <div id="hiddenHand"></div>
+            <div id="myRole"></div>`;
+        playerElements.set(myId, document.getElementById('myPlayer'));
+        if (playerData.has(myId) && playerData.get(myId).name) {
+            [...document.getElementById('myPlayer').getElementsByClassName('name')].forEach((elem) => {
+                elem.innerText = playerData.get(myId).name;
+            });
+        }
+    }
+    else {
+        document.getElementById('myPlayer').innerHTML = `Spectating`;
     }
     picker = data.firstPlayer;
     playerElements.get(picker).classList.add('inPower');
@@ -182,5 +216,16 @@ clientHandlers['name-list'] = function(list) {
     let nameListDiv = document.getElementById("playerNameList")
     if (nameListDiv) {
         nameListDiv.innerText = `Players: ${list}`;
+    }
+}
+
+clientHandlers['set-display-hand'] = function(data) {
+    setDisplayHand(data.playerId, data.hand);
+}
+
+clientHandlers['set-picked-by'] = function(picker) {
+    if (isBlackAce) {
+        document.getElementById("goal").innerText = `You are on ${playerData.get(picker).name}'s team`;
+        isBlackAce = false;
     }
 }

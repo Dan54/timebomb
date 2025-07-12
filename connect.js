@@ -1,4 +1,4 @@
-import {connectToServer, disconnect, sendToServer, connectAsNewId} from "./comms.js";
+import {connectToServer, disconnect, sendToServer, connectAsNewId, rejoinAs, clientHandlers} from "./comms.js";
 import {setName} from "./client.js";
 import {startServer, startGame, setStartCb} from "./server.js";
 
@@ -86,11 +86,47 @@ export function showUsernamePrompt() {
     });
 }
 
+function requestClientId(host) {
+    if (host === window.sessionStorage.getItem('host')) {
+        rejoinAs(parseInt(window.sessionStorage.getItem('id')));
+    }
+    else if (host === window.localStorage.getItem('host')) {
+        document.getElementById("connectSection").hidden = false;
+        document.getElementById("connectSection").innerHTML = `<div>You have previously joined this room, would you like to rejoin?</div>
+        <div><button id="reconnect">Rejoin</button><button id="joinAsNew">Join as new player</button></div>`;
+        document.getElementById('reconnect').addEventListener("click", () => {
+            document.getElementById("connectSection").hidden = true;
+            rejoinAs(parseInt(window.localStorage.getItem('id')));
+        });
+        document.getElementById('joinAsNew').addEventListener("click", () => {
+            document.getElementById("connectSection").hidden = true;
+            connectAsNewId();
+        });
+    }
+    else {
+        connectAsNewId();
+    }
+}
+
+clientHandlers['rejoin-fail'] = function(data) {
+    document.getElementById("connectSection").hidden = false;
+    document.getElementById("connectSection").innerHTML = `<div>Could not rejoin, make sure the original tab is closed.</div>
+    <div><button id="reconnect">Rejoin</button><button id="joinAsNew">Join as new player</button></div>`;
+    document.getElementById('reconnect').addEventListener("click", () => {
+        document.getElementById("connectSection").hidden = true;
+        rejoinAs(parseInt(window.localStorage.getItem('id')));
+    });
+    document.getElementById('joinAsNew').addEventListener("click", () => {
+        document.getElementById("connectSection").hidden = true;
+        connectAsNewId();
+    });
+}
+
 if (hostId) {
     document.getElementById("connectSection").hidden = true;
     connectToServer(hostId, () => {
         connectionOpen = true;
-        connectAsNewId();
+        requestClientId(hostId);
     });
     setTimeout(() => {
         if (!connectionOpen) {
@@ -101,11 +137,11 @@ if (hostId) {
     }, 2000);
 }
 document.getElementById("connectButton").addEventListener("click", () => {
+    document.getElementById("connectSection").hidden = true;
     connectToServer(document.getElementById("serverId").value, () => {
         connectionOpen = true;
-        connectAsNewId();
+        requestClientId(hostId);
     });
-    document.getElementById("connectSection").hidden = true;
 });
 document.getElementById("startButton").addEventListener("click", () => {
     document.getElementById("connectSection").innerHTML = '';

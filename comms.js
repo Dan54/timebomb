@@ -153,8 +153,10 @@ export function doHeartbeat(callback) {
     else {
         curHeartbeat = [];
         heartbeatCallbacks = [callback];
-        clients.forEach((conn) => {
-            conn.send({isControl: true, type: 'heartbeat', index: heartbeatIndex});
+        clients.forEach((conn, id) => {
+            if (conn.open) {
+                conn.send({isControl: true, type: 'heartbeat', index: heartbeatIndex});
+            }
         })
         if (localId !== null) {
             curHeartbeat.push(localId);
@@ -166,4 +168,8 @@ export function doHeartbeat(callback) {
             heartbeatCallbacks.forEach((cb) => cb(heartbeatReturned));
         }, 2000);
     }
+}
+
+export function getHost() {
+    return conn?.peer;
 }

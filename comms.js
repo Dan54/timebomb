@@ -12,10 +12,7 @@ export function createServer(cb) {
     clients = new Map();
     peer.on('open', function(id) {
         peer.on('connection', function(connection) {
-            const cid = nextId;
             const connectData = {established: false};
-            nextId += 1;
-            clients.set(cid, connection);
             connection.on('data', function(data) {
                 if (connectData.established && !data.isControl) {
                     serverHandlers[data.type](connectData.cid, data.data);
@@ -28,11 +25,28 @@ export function createServer(cb) {
                             clients.set(cid, connection);
                             connectData.established = true;
                             connectData.cid = cid;
+                            curHeartbeat?.push(connectData.cid); // if heartbeat in progress, mark as connected
                             sendToClient(cid, 'connect', {id: cid});
                             serverHandlers['connect'](cid, null);
                             break;
                         case 'rejoin':
-                            // TODO: implement rejoins
+                            doHeartbeat((liveClients) => {
+                                const cid = data.rejoinId;
+                                if (liveClients.indexOf(cid) === -1) {
+                                    // allow usurpation, old client is disconnected
+                                    clients.get(cid)?.close();
+                                    clients.set(cid, connection);
+                                    connectData.cid = cid;
+                                    connectData.established = true;
+                                    curHeartbeat?.push(connectData.cid); // if heartbeat in progress, mark as connected
+                                    sendToClient(cid, 'rejoin-success', {id: cid});
+                                    serverHandlers['rejoin'](cid, null);
+                                }
+                                else {
+                                    // refuse usurpation, notify attempted rejoiner
+                                    connection.send({type: 'rejoin-fail', data: null, isControl: false});
+                                }
+                            });
                             break;
                         case 'heartbeat':
                             if (data.index === heartbeatIndex) {
@@ -55,7 +69,7 @@ export function disconnect() {
     peer = null;
 }
 
-export function connectToServer(serverId) {
+export function connectToServer(serverId, callback) {
     if (conn !== null) {
         return;
     }
@@ -64,10 +78,16 @@ export function connectToServer(serverId) {
         conn = peer.connect(serverId, {reliable: true});
         conn.on('data', recieveFromServer);
         conn.on('error', (err) => console.error(err));
-        conn.on('open', () => {
-            conn?.send({type: 'new-client', isControl: true});
-        });
+        conn.on('open', callback);
     });
+}
+
+export function connectAsNewId() {
+    conn.send({type: 'new-client', isControl: true});
+}
+
+export function rejoinAs(id) {
+    conn.send({type: 'rejoin', isControl: true, rejoinId: id});
 }
 
 export function connectToLocal() {
@@ -124,13 +144,15 @@ export function sendToServer(msgType, data) {
 export let heartbeatReturned = [];
 let curHeartbeat = null;
 let heartbeatIndex = 0;
+let heartbeatCallbacks = null;
 
-export function doHearbeat(callback) {
+export function doHeartbeat(callback) {
     if (curHeartbeat) {
-        setTimeout(callback, 2000);
+        heartbeatCallbacks.push(callback);
     }
     else {
         curHeartbeat = [];
+        heartbeatCallbacks = [callback];
         clients.forEach((conn) => {
             conn.send({isControl: true, type: 'heartbeat', index: heartbeatIndex});
         })
@@ -141,7 +163,7 @@ export function doHearbeat(callback) {
             heartbeatReturned = curHeartbeat;
             heartbeatIndex += 1;
             curHeartbeat = null;
-            callback();
+            heartbeatCallbacks.forEach((cb) => cb(heartbeatReturned));
         }, 2000);
     }
 }

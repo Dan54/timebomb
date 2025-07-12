@@ -149,7 +149,7 @@ export function startGame() {
     }
     console.log(badIn, goodIn, redAceIn, blackAceIn);
     let roleList = new Array(goodIn).fill('good').concat(new Array(badIn).fill('bad')).concat(new Array(redAceIn).fill('red-ace')).concat(new Array(blackAceIn).fill('black-ace'));
-    if (involvedPlayers.indexOf(firstPlayer) === 0) {
+    if (involvedPlayers.indexOf(firstPlayer) === -1) {
         firstPlayer = involvedPlayers[0];
     }
     curPicker = firstPlayer;

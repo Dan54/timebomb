@@ -126,6 +126,7 @@ clientHandlers['start-game'] = function(data) {
         document.getElementById('myPlayer').innerHTML = `Spectating`;
     }
     picker = data.firstPlayer;
+    document.getElementById('myPlayer').classList.remove('inPower');
     playerElements.get(picker).classList.add('inPower');
 };
 

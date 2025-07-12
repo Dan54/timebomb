@@ -73,6 +73,11 @@ function updateActivePlayers() {
         updateNameList();
         if (!gameActive && oldlength !== activePlayers.length) {
             setDefaultRoleCounts();
+            document.getElementById("goodCount").value = goodIn.toString();
+            document.getElementById("badCount").value = badIn.toString();
+            document.getElementById("redAceCount").value = redAceIn.toString();
+            document.getElementById("blackAceCount").value = blackAceIn.toString();
+            document.getElementById("cardCount").value = cardsPerPlayer.toString();
         }
     });
 }

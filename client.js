@@ -51,6 +51,7 @@ function createOtherPlayer(id) {
     ops.insertAdjacentHTML("beforeend", `<div class="player">
             <div class="name"></div>
             <div class="displayHand"></div>
+            <div class="claim"></div>
         </div>`);
     playerElements.set(id, ops.lastElementChild);
     if (playerData.has(id) && playerData.get(id).name) {
@@ -77,12 +78,20 @@ function setDisplayHand(playerId, hand) {
         }
     }
 }
+function setPlayerClaim(playerId, claim) {
+    let claimDivs = playerElements.get(playerId).getElementsByClassName('claim');
+    if (claimDivs.length > 0) {
+        claimDivs[0].innerText = claim;
+    }
+}
 
 clientHandlers['start-round'] = function(cardsPerPlayer) {
     let displayHand = new Array(cardsPerPlayer).fill(cardBack);
     for (const playerId of playerElements.keys()) {
         setDisplayHand(playerId, displayHand);
+        setPlayerClaim(playerId, "");
     }
+    document.getElementById("claimBox").value = "";
 };
 
 clientHandlers['start-game'] = function(data) {
@@ -102,7 +111,10 @@ clientHandlers['start-game'] = function(data) {
             <div class="name"></div>
             <div class="displayHand"></div>
             <div id="hiddenHand"></div>
-            <div id="myRole"></div>`;
+            <div><input id="claimBox"/><button id="claimButton">Claim</button></div>`;
+        document.getElementById("claimButton").addEventListener("click", () => {
+            sendToServer('change-claim', claimBox.value)
+        });
         playerElements.set(myId, document.getElementById('myPlayer'));
         if (playerData.has(myId) && playerData.get(myId).name) {
             [...document.getElementById('myPlayer').getElementsByClassName('name')].forEach((elem) => {
@@ -228,4 +240,15 @@ clientHandlers['set-picked-by'] = function(picker) {
         document.getElementById("goal").innerText = `You are on ${playerData.get(picker).name}'s team`;
         isBlackAce = false;
     }
+}
+
+clientHandlers['role-counts'] = function(data) {
+    document.getElementById("goodCountBottom").innerText = data.good.toString();
+    document.getElementById("badCountBottom").innerText = data.bad.toString();
+    document.getElementById("RACountBottom").innerText = data.redAce.toString();
+    document.getElementById("BACountBottom").innerText = data.blackAce.toString();
+}
+
+clientHandlers['change-claim'] = function(data) {
+    setPlayerClaim(data.playerId, data.claim);
 }

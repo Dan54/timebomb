@@ -24,7 +24,7 @@ function handleJoin(id) {
                 sendToClient(id, 'change-name', {playerId: ipid, name: playerData.name});
             }
             sendToClient(id, 'set-display-hand', {playerId: ipid, hand: playerData.displayHand});
-            updateCounts(); // send the number of cards picked etc.
+            updateCardCounts(); // send the number of cards picked etc.
         });
         if (involvedPlayers.indexOf(id) !== -1) {
             const playerData = players.get(id);
@@ -34,6 +34,7 @@ function handleJoin(id) {
                 sendToClient(id, 'set-picked-by', playerData.pickedBy);
             }
         }
+        showRoleCounts();
     }
 }
 
@@ -153,6 +154,7 @@ export function startGame() {
     }
     curPicker = firstPlayer;
     broadcast('start-game', {firstPlayer: firstPlayer, players: involvedPlayers});
+    showRoleCounts();
     shuffleArray(roleList);
     involvedPlayers.forEach((id) => {
         const playerData = players.get(id);
@@ -173,7 +175,7 @@ function startRound() {
     pickedThisRound = 0;
 
     scaryJokers = primerLeft === 0 && jokersLeft !== 0;
-    updateCounts();
+    updateCardCounts();
 
     for (let c = 0; c < blacksLeft; c++) {
         cardList[i++] = 'B';
@@ -249,7 +251,7 @@ function pickCard(id, data) {
             break;
     }
     pickedThisRound += 1;
-    updateCounts();
+    updateCardCounts();
     if (pickedThisRound === numPlayers && gameActive) {
         betweenRounds = true;
         cardsPerPlayer -= 1;
@@ -421,7 +423,7 @@ function showRestartScreen() {
     document.getElementById("startGame").innerText = "Start New Game";
 }
 
-function updateCounts() {
+function updateCardCounts() {
     let data = {
         blackCount: `${numPlayers-blacksLeft}/${numPlayers}`,
         jokerCount: `${2-jokersLeft}/2`,
@@ -431,9 +433,22 @@ function updateCounts() {
     };
     broadcast('update-counts', data);
 }
+function showRoleCounts() {
+    let data = {
+        good: goodIn,
+        bad: badIn,
+        redAce: redAceIn,
+        blackAce: blackAceIn,
+    };
+    broadcast('role-counts', data);
+}
 
 serverHandlers['set-name'] = function(id, name) {
     players.get(id).name = name;
     broadcast('change-name', {playerId: id, name: name});
     updateNameList();
+}
+
+serverHandlers['change-claim'] = function(id, claim) {
+    broadcast('change-claim', {playerId: id, claim: claim});
 }

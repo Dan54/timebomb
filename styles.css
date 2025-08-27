@@ -92,7 +92,7 @@ html {
     width: 9.5em;
     height: 6em;
     overflow-x: hidden;
-    overflow-y: scroll;
+    overflow-y: auto;
 }
 .player.inPower {
     outline-width: 5px;

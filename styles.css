@@ -91,6 +91,7 @@ html {
     align-items: center;
     width: 9.5em;
     height: 6em;
+    overflow: hidden;
 }
 .player.inPower {
     outline-width: 5px;

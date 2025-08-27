@@ -23,6 +23,9 @@ function handleJoin(id) {
             if (playerData.name) { // make sure everyone knows the name
                 sendToClient(id, 'change-name', {playerId: ipid, name: playerData.name});
             }
+            if (playerData.claim) { // make sure everyone knows the claim
+                sendToClient(id, 'change-claim', {playerId: ipid, claim: playerData.claim});
+            }
             sendToClient(id, 'set-display-hand', {playerId: ipid, hand: playerData.displayHand});
             updateCardCounts(); // send the number of cards picked etc.
         });
@@ -201,6 +204,7 @@ function startRound() {
         i += cardsPerPlayer;
         playerData.cards = cards;
         playerData.displayHand = new Array(cardsPerPlayer).fill(cardBack);
+        playerData.claim = '';
         sendToClient(id, 'set-cards', cards);
     });
     betweenRounds = false;
@@ -455,5 +459,6 @@ serverHandlers['set-name'] = function(id, name) {
 }
 
 serverHandlers['change-claim'] = function(id, claim) {
+    players.get(id).claim = claim;
     broadcast('change-claim', {playerId: id, claim: claim});
 }
